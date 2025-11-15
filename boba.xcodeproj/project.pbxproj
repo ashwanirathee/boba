@@ -24,9 +24,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5E7970E62E1CB01E002023F0 /* chatur.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = chatur.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5E7970F62E1CB01F002023F0 /* chaturTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = chaturTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5E7971002E1CB01F002023F0 /* chaturUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = chaturUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E7970E62E1CB01E002023F0 /* Boba.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Boba.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E7970F62E1CB01F002023F0 /* bobaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bobaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E7971002E1CB01F002023F0 /* bobaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bobaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -85,9 +85,9 @@
 		5E7970E72E1CB01E002023F0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5E7970E62E1CB01E002023F0 /* chatur.app */,
-				5E7970F62E1CB01F002023F0 /* chaturTests.xctest */,
-				5E7971002E1CB01F002023F0 /* chaturUITests.xctest */,
+				5E7970E62E1CB01E002023F0 /* Boba.app */,
+				5E7970F62E1CB01F002023F0 /* bobaTests.xctest */,
+				5E7971002E1CB01F002023F0 /* bobaUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5E7970E52E1CB01E002023F0 /* chatur */ = {
+		5E7970E52E1CB01E002023F0 /* boba */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5E79710A2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "chatur" */;
+			buildConfigurationList = 5E79710A2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "boba" */;
 			buildPhases = (
 				5E7970E22E1CB01E002023F0 /* Sources */,
 				5E7970E32E1CB01E002023F0 /* Frameworks */,
@@ -110,16 +110,16 @@
 			fileSystemSynchronizedGroups = (
 				5E7970E82E1CB01E002023F0 /* chatur */,
 			);
-			name = chatur;
+			name = boba;
 			packageProductDependencies = (
 			);
 			productName = chatur;
-			productReference = 5E7970E62E1CB01E002023F0 /* chatur.app */;
+			productReference = 5E7970E62E1CB01E002023F0 /* Boba.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5E7970F52E1CB01F002023F0 /* chaturTests */ = {
+		5E7970F52E1CB01F002023F0 /* bobaTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5E79710D2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "chaturTests" */;
+			buildConfigurationList = 5E79710D2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "bobaTests" */;
 			buildPhases = (
 				5E7970F22E1CB01F002023F0 /* Sources */,
 				5E7970F32E1CB01F002023F0 /* Frameworks */,
@@ -133,16 +133,16 @@
 			fileSystemSynchronizedGroups = (
 				5E7970F92E1CB01F002023F0 /* chaturTests */,
 			);
-			name = chaturTests;
+			name = bobaTests;
 			packageProductDependencies = (
 			);
 			productName = chaturTests;
-			productReference = 5E7970F62E1CB01F002023F0 /* chaturTests.xctest */;
+			productReference = 5E7970F62E1CB01F002023F0 /* bobaTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		5E7970FF2E1CB01F002023F0 /* chaturUITests */ = {
+		5E7970FF2E1CB01F002023F0 /* bobaUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5E7971102E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "chaturUITests" */;
+			buildConfigurationList = 5E7971102E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "bobaUITests" */;
 			buildPhases = (
 				5E7970FC2E1CB01F002023F0 /* Sources */,
 				5E7970FD2E1CB01F002023F0 /* Frameworks */,
@@ -156,11 +156,11 @@
 			fileSystemSynchronizedGroups = (
 				5E7971032E1CB01F002023F0 /* chaturUITests */,
 			);
-			name = chaturUITests;
+			name = bobaUITests;
 			packageProductDependencies = (
 			);
 			productName = chaturUITests;
-			productReference = 5E7971002E1CB01F002023F0 /* chaturUITests.xctest */;
+			productReference = 5E7971002E1CB01F002023F0 /* bobaUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +186,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5E7970E12E1CB01E002023F0 /* Build configuration list for PBXProject "chatur" */;
+			buildConfigurationList = 5E7970E12E1CB01E002023F0 /* Build configuration list for PBXProject "boba" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -200,9 +200,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5E7970E52E1CB01E002023F0 /* chatur */,
-				5E7970F52E1CB01F002023F0 /* chaturTests */,
-				5E7970FF2E1CB01F002023F0 /* chaturUITests */,
+				5E7970E52E1CB01E002023F0 /* boba */,
+				5E7970F52E1CB01F002023F0 /* bobaTests */,
+				5E7970FF2E1CB01F002023F0 /* bobaUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		5E7970F82E1CB01F002023F0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5E7970E52E1CB01E002023F0 /* chatur */;
+			target = 5E7970E52E1CB01E002023F0 /* boba */;
 			targetProxy = 5E7970F72E1CB01F002023F0 /* PBXContainerItemProxy */;
 		};
 		5E7971022E1CB01F002023F0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5E7970E52E1CB01E002023F0 /* chatur */;
+			target = 5E7970E52E1CB01E002023F0 /* boba */;
 			targetProxy = 5E7971012E1CB01F002023F0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -399,6 +399,11 @@
 				DEVELOPMENT_TEAM = FUD7M9RJ5H;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to show your coordinates.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show your coordinates.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "allow boba to save to your library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "allow boba to save to your library";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -410,7 +415,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ashwanirathee.chatur;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Boba;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -428,6 +433,11 @@
 				DEVELOPMENT_TEAM = FUD7M9RJ5H;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "We need your location to show your coordinates.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to show your coordinates.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "allow boba to save to your library";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "allow boba to save to your library";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -439,7 +449,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ashwanirathee.chatur;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Boba;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -461,7 +471,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/chatur.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/chatur";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/boba.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/boba";
 			};
 			name = Debug;
 		};
@@ -480,7 +490,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/chatur.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/chatur";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/boba.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/boba";
 			};
 			name = Release;
 		};
@@ -521,7 +531,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5E7970E12E1CB01E002023F0 /* Build configuration list for PBXProject "chatur" */ = {
+		5E7970E12E1CB01E002023F0 /* Build configuration list for PBXProject "boba" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5E7971082E1CB01F002023F0 /* Debug */,
@@ -530,7 +540,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5E79710A2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "chatur" */ = {
+		5E79710A2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "boba" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5E79710B2E1CB01F002023F0 /* Debug */,
@@ -539,7 +549,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5E79710D2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "chaturTests" */ = {
+		5E79710D2E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "bobaTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5E79710E2E1CB01F002023F0 /* Debug */,
@@ -548,7 +558,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5E7971102E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "chaturUITests" */ = {
+		5E7971102E1CB01F002023F0 /* Build configuration list for PBXNativeTarget "bobaUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5E7971112E1CB01F002023F0 /* Debug */,
