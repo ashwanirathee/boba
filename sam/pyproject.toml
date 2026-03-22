@@ -16,6 +16,7 @@ dependencies = [
     "ollama>=0.6.1",
     "onnxruntime>=1.24.3",
     "pip>=26.0.1",
+    "pynput>=1.8.1",
     "python-dotenv",
     "requests>=2.32.5",
     "setuptools>=82.0.1",
