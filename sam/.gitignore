@@ -1,0 +1,6 @@
+__pycache__
+voice_ai.egg-info/
+dist
+.venv
+.env
+data/
