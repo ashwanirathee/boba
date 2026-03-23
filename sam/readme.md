@@ -33,7 +33,7 @@ ESPEAK_DATA_PATH="$(brew --prefix espeak-ng)/share/espeak-ng-data" \
 	uv run src/agent.py
 ```
 
-Controls: `1` starts recording, `2` stops, `q` exits. After recording stops the assistant transcribes locally, calls the configured Ollama model, and speaks the cleaned reply.
+Controls: `1` starts recording, `2` stops, `x` interrupts transcribing, thinking, or speaking, and `q` exits. When global hotkeys are enabled, Sam also supports hold-to-record on `9` and interrupt on `x`.
 
 
 ## Troubleshooting

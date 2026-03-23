@@ -2,13 +2,15 @@ import asyncio
 import logging
 import os
 import queue
+import json
+import select
 import sys
 import tempfile
 import threading
 import platform
 import termios
 import wave
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 import numpy as np
@@ -23,6 +25,7 @@ import re
 import traceback
 from kittentts import KittenTTS
 from pynput import keyboard as pynput_keyboard
+from src.librarian_client import LibrarianClient
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +35,7 @@ MLX_LOCK = asyncio.Lock()
 
 class Project:
     RECORD_HOTKEY = "9"
+    INTERRUPT_HOTKEY = "x"
 
     @contextmanager
     def suppress_terminal_echo(self):
@@ -91,9 +95,103 @@ class Project:
             listener.join()
         return command["value"]
 
+    def stop_current_work(self) -> None:
+        self.interrupt_requested.set()
+        try:
+            sd.stop()
+        except Exception:
+            pass
+
+    def start_interrupt_monitor(self, loop: asyncio.AbstractEventLoop, interrupt_event: asyncio.Event):
+        stop_event = threading.Event()
+        handles: dict[str, object] = {}
+
+        def trigger_interrupt() -> None:
+            if stop_event.is_set() or interrupt_event.is_set():
+                return
+            self.stop_current_work()
+            loop.call_soon_threadsafe(interrupt_event.set)
+
+        if self.hotkeys_enabled:
+            def on_press(k):
+                try:
+                    if bool(getattr(k, "char", None)) and k.char.lower() == self.INTERRUPT_HOTKEY:
+                        trigger_interrupt()
+                        return False
+                except Exception:
+                    pass
+                return None
+
+            listener = pynput_keyboard.Listener(on_press=on_press)
+            listener.start()
+            handles["listener"] = listener
+        else:
+            def watch_stdin():
+                while not stop_event.is_set():
+                    try:
+                        ready, _, _ = select.select([sys.stdin], [], [], 0.1)
+                    except Exception:
+                        return
+                    if not ready:
+                        continue
+                    line = sys.stdin.readline()
+                    if line.strip().lower() == self.INTERRUPT_HOTKEY:
+                        trigger_interrupt()
+                        return
+
+            watcher = threading.Thread(target=watch_stdin, daemon=True)
+            watcher.start()
+            handles["watcher"] = watcher
+
+        def cleanup() -> None:
+            stop_event.set()
+            listener = handles.get("listener")
+            if listener is not None:
+                listener.stop()
+                listener.join()
+            watcher = handles.get("watcher")
+            if watcher is not None:
+                watcher.join(timeout=0.2)
+
+        return cleanup
+
+    async def run_interruptible(self, label: str, awaitable):
+        self.interrupt_requested.clear()
+        loop = asyncio.get_running_loop()
+        interrupt_event = asyncio.Event()
+        cleanup = self.start_interrupt_monitor(loop, interrupt_event)
+        task = asyncio.create_task(awaitable)
+        interrupt_task = asyncio.create_task(interrupt_event.wait())
+        interrupted = False
+
+        try:
+            done, pending = await asyncio.wait(
+                {task, interrupt_task},
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for pending_task in pending:
+                pending_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await pending_task
+
+            if interrupt_task in done:
+                interrupted = True
+                logger.info(f"{label} interrupted.")
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+                return None
+
+            return await task
+        finally:
+            cleanup()
+            if not interrupted:
+                self.interrupt_requested.clear()
+
     def __init__(self, args=None):
         self.args = args
         self.hotkeys_enabled = self.keyboard_hotkeys_available()
+        self.interrupt_requested = threading.Event()
 
         # Load introduction text from file
         intro_path = Path(__file__).parent.parent / "data" / "introduction_text.txt"
@@ -137,6 +235,21 @@ class Project:
         )
 
         self.local_stt = load_stt(self.stt_model)
+        self.librarian_client = None
+        self.librarian_collections = [
+            collection.strip()
+            for collection in (os.getenv("LIBRARIAN_COLLECTIONS") or "shared").split(",")
+            if collection.strip()
+        ]
+
+        librarian_url = os.getenv("LIBRARIAN_URL")
+        librarian_token = os.getenv("LIBRARIAN_TOKEN")
+        if librarian_url and librarian_token:
+            self.librarian_client = LibrarianClient(
+                base_url=librarian_url,
+                token=librarian_token,
+                timeout=float(os.getenv("LIBRARIAN_TIMEOUT_SECONDS") or "2.0"),
+            )
 
         self.llm_mode = (os.getenv("OLLAMA_MODE") or "local")
         if self.llm_mode == "cloud":
@@ -160,6 +273,7 @@ class Project:
         logger.info("Voice assistant")
         if self.hotkeys_enabled:
             logger.info(f"Hold {self.RECORD_HOTKEY} to record and release to stop")
+            logger.info(f"Press {self.INTERRUPT_HOTKEY} to stop transcribing, thinking, or speaking")
             logger.info("Press q to quit")
         else:
             logger.warning(
@@ -172,6 +286,7 @@ class Project:
             )
             logger.info("Press 1 then Enter to start recording")
             logger.info("Press 2 then Enter to stop recording")
+            logger.info(f"Press {self.INTERRUPT_HOTKEY} then Enter to stop transcribing, thinking, or speaking")
             logger.info("Press q then Enter to quit")
 
         audio_reply = await self.synthesize(self.introduction_text)
@@ -217,9 +332,11 @@ class Project:
 
             logger.info("Transcribing...")
             t2 = time.monotonic()
-            text = await self.transcribe(audio)
+            text = await self.run_interruptible("Transcription", self.transcribe(audio))
             t3 = time.monotonic()
             logger.info(f"[Timing] Transcription took {t3 - t2:.2f} seconds.")
+            if text is None:
+                continue
             if not text:
                 logger.info("No speech detected.")
                 continue
@@ -228,18 +345,25 @@ class Project:
 
             logger.info("Thinking...")
             t4 = time.monotonic()
-            reply = await self.ask_ollama(text)
+            reply = await self.run_interruptible("Thinking", self.ask_ollama(text))
             t5 = time.monotonic()
             logger.info(f"[Timing] LLM response took {t5 - t4:.2f} seconds.")
+            if reply is None:
+                continue
             logger.info(f"Assistant: {reply}")
 
             logger.info("Speaking...")
             t6 = time.monotonic()
-            audio_reply = await self.synthesize(reply)
+            audio_reply = await self.run_interruptible("Speech synthesis", self.synthesize(reply))
             t7 = time.monotonic()
             logger.info(f"[Timing] TTS synthesis took {t7 - t6:.2f} seconds.")
+            if audio_reply is None:
+                continue
             try:
-                await asyncio.to_thread(self.play_audio, audio_reply, 24000)
+                await self.run_interruptible(
+                    "Playback",
+                    asyncio.to_thread(self.play_audio, audio_reply, 24000),
+                )
             except Exception as e:
                 logger.info(f"Error during audio playback: {e}")
 
@@ -354,8 +478,12 @@ class Project:
 
         try:
             await asyncio.to_thread(self.write_pcm16_wav, audio, wav_path, 16000)
+            if self.interrupt_requested.is_set():
+                return ""
             async with MLX_LOCK:
                 result = await asyncio.to_thread(self.local_stt.generate, str(wav_path))
+            if self.interrupt_requested.is_set():
+                return ""
             return (getattr(result, "text", "") or "").strip()
         finally:
             try:
@@ -364,11 +492,14 @@ class Project:
                 pass
 
     def ask_ollama_sync(self, prompt: str) -> str:
+        rag_context = self.build_rag_context(prompt)
+        composed_prompt = self.compose_prompt(prompt, rag_context)
+
         if self.llm_mode == "cloud":
             messages = [
                 {
                     "role": "user",
-                    "content": prompt,
+                    "content": composed_prompt,
                 },
             ]
 
@@ -376,31 +507,97 @@ class Project:
             for part in self.ollama_client.chat(
                 "gpt-oss:120b", messages=messages, stream=True
             ):
+                if self.interrupt_requested.is_set():
+                    return self.clean_for_tts(result.strip())
                 result += part["message"]["content"]
 
             # r.json()["response"].strip()
             return self.clean_for_tts(result.strip())
         else:
+            response_parts: list[str] = []
             r = requests.post(
                 f"{self.ollama_base_url}/api/generate",
                 json={
                     "model": self.llm_model,
-                    "prompt": (
-                        "You are a helpful voice AI assistant. "
-                        "Keep responses concise, clear, and natural for speech.\n\n"
-                        f"User: {prompt}\nAssistant:"
-                    ),
-                    "stream": False,
+                    "prompt": composed_prompt,
+                    "stream": True,
                 },
                 timeout=120,
+                stream=True,
             )
             r.raise_for_status()
-            return r.json()["response"].strip()
+            try:
+                for line in r.iter_lines(decode_unicode=True):
+                    if self.interrupt_requested.is_set():
+                        return self.clean_for_tts("".join(response_parts).strip())
+                    if not line:
+                        continue
+                    payload = json.loads(line)
+                    chunk = payload.get("response", "")
+                    if chunk:
+                        response_parts.append(chunk)
+                    if payload.get("done"):
+                        break
+            finally:
+                r.close()
+            return self.clean_for_tts("".join(response_parts).strip())
 
     async def ask_ollama(self, prompt: str) -> str:
         return await asyncio.to_thread(self.ask_ollama_sync, prompt)
 
+    def build_rag_context(self, prompt: str) -> str:
+        if not self.librarian_client:
+            return ""
+
+        try:
+            payload = self.librarian_client.query(
+                query=prompt,
+                limit=int(os.getenv("LIBRARIAN_TOP_K") or "4"),
+                collections=self.librarian_collections,
+            )
+            logger.info(f"Medha query success, got response")
+        except Exception as exc:
+            logger.info(f"Medha unavailable, continuing without RAG: {exc}")
+            return ""
+
+        results = payload.get("results", [])
+        if not results:
+            return ""
+
+        blocks = []
+        for idx, item in enumerate(results, start=1):
+            document = item.get("document", {})
+            title = document.get("title", "Untitled")
+            collection = document.get("collection", "unknown")
+            content = (item.get("content", "") or "").strip()
+            if not content:
+                continue
+            blocks.append(
+                f"[{idx}] {title} ({collection})\n{content}"
+            )
+        return "\n\n".join(blocks)
+
+    def compose_prompt(self, user_prompt: str, rag_context: str) -> str:
+        base_instruction = (
+            "You are a helpful voice AI assistant. "
+            "Keep responses concise, clear, and natural for speech."
+        )
+
+        if rag_context:
+            return (
+                f"{base_instruction}\n\n"
+                "Use the retrieved context when it is relevant. "
+                "If the answer is not supported by the context, rely on general reasoning "
+                "but do not pretend the context said it.\n\n"
+                f"Retrieved context:\n{rag_context}\n\n"
+                f"User: {user_prompt}\nAssistant:"
+            )
+
+        return f"{base_instruction}\n\nUser: {user_prompt}\nAssistant:"
+
     def synthesize_sync(self, text: str):
+        if self.interrupt_requested.is_set():
+            return None
         out_audio = None
         if self.tts_model and "kitten" in self.tts_model.lower():
             audio = self.local_tts.generate(text, voice=self.tts_voice, speed=1.2)
@@ -409,7 +606,11 @@ class Project:
             for result in self.local_tts.generate(
                 text, voice=self.tts_voice
             ):
+                if self.interrupt_requested.is_set():
+                    return None
                 out_audio = result.audio
+        if self.interrupt_requested.is_set():
+            return None
         return out_audio
 
     async def synthesize(self, text: str):
