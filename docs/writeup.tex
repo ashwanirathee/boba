@@ -14,16 +14,16 @@
 \maketitle
 
 \section{Overview}
-The \texttt{boba} repository currently contains two main software projects. The first is \texttt{chatur}, a SwiftUI iOS application that groups together several personal utility tools such as location tracking, photo capture, geospatial AR, a notepad, finance tracking, and a pomodoro timer. The second is \texttt{sam}, a Python-based voice assistant that records microphone input, transcribes speech locally, optionally retrieves context from an external Medha service, sends a prompt to an Ollama language model, and plays back a synthesized spoken response.
+The \texttt{boba} repository currently centers on one in-repo application: \texttt{chatur}, a SwiftUI iOS app that combines several personal utility workflows behind a side-menu navigation model. The app includes location tracking, photo capture and metadata logging, geospatial screens, a notepad, finance calculations, and a pomodoro timer.
 
-Although the two systems are built with different languages and runtimes, they share a similar design goal: they are lightweight, personal, and oriented toward direct interaction instead of large distributed infrastructure.
+The repository also includes shared docs and Xcode project metadata used to build and run the iOS target.
 
 \section{Repository Structure}
 The top-level repository is organized into three important areas:
 
 \begin{itemize}[leftmargin=*]
 \item \texttt{chatur/}: SwiftUI application source code and app resources.
-\item \texttt{sam/}: Python voice assistant code, configuration, and prompt assets.
+\item \texttt{boba.xcodeproj/}: Xcode project and workspace files.
 \item \texttt{docs/}: repository documentation, including this writeup.
 \end{itemize}
 
@@ -46,63 +46,51 @@ The main screens exposed through \texttt{SideMenuView} are:
 \end{itemize}
 
 \subsection{Key Features}
-\textbf{Home screen.} \texttt{MainPageView} displays the current time, elapsed time from a configured start date, and the current latitude and longitude. It also includes lightweight widgets for daily water intake and outside time.
+\textbf{Home screen.} \texttt{MainPageView} displays the current date/time, elapsed time from a configured baseline date, and the current latitude/longitude. It also embeds widgets for daily water intake and outside time tracking.
 
-\textbf{Location tracking.} \texttt{LocationController} uses \texttt{CoreLocation} to request location updates, publishes the current region, stores recent coordinates, and persists location points into the SQLite database with a throttled save interval.
+\textbf{Location tracking.} \texttt{LocationController} uses \texttt{CoreLocation} to request updates, publishes map region and altitude, stores a rolling set of recent coordinates, and persists location points into SQLite with throttled writes.
 
-\textbf{Camera and photo logging.} \texttt{CameraView} works with \texttt{PhotoRecordController} to capture images, adjust zoom, exposure, and focus, and save photo metadata together with the user location. The view also supports simple visual effects before saving.
+\textbf{Camera and photo logging.} \texttt{CameraView} works with \texttt{PhotoRecordController} to capture images, adjust zoom/exposure/focus, apply optional Core Image effects, save processed files, and record timestamp/location metadata in SQLite.
 
 \textbf{Geospatial AR.} Files such as \texttt{GeospatialView.swift}, \texttt{GeospatialScreen.swift}, and \texttt{GeospatialCoordinator.swift} indicate an AR-driven geospatial experience layered on top of device and location state.
 
-\textbf{Finance tracking.} \texttt{FinanceView} combines a rent and utility split calculator with a persistent list of recurring costs managed by \texttt{HardCostController}.
+\textbf{Finance tracking.} \texttt{FinanceView} combines shared-bill math with a persistent, editable list of recurring costs managed by \texttt{HardCostController}.
 
 \textbf{Notes and productivity.} Additional views such as \texttt{NotepadView} and \texttt{PomodoroView} support simple note-taking and time-management workflows.
 
 \subsection{Persistence}
-The app uses a shared SQLite database through \texttt{DatabaseStore.swift}. Controllers such as \texttt{LocationController}, \texttt{PhotoRecordController}, and the daily tracking controllers interact with this storage layer to persist app state across runs.
-
-\section{The Sam Voice Assistant}
-\subsection{Architecture}
-The assistant is launched from \texttt{sam/run\_voice\_agent.py}, which parses CLI arguments and constructs \texttt{Project} from \texttt{sam/src/project.py}. The \texttt{Project} class owns the end-to-end interaction loop:
-
-\begin{enumerate}[leftmargin=*]
-\item wait for user input through a keyboard hotkey or fallback terminal commands,
-\item record audio from the microphone,
-\item transcribe audio with a local STT model,
-\item optionally retrieve supporting context from an external Medha-compatible knowledge API,
-\item send the transcript to an Ollama model,
-\item synthesize the response with a local TTS model,
-\item play the resulting audio back to the user.
-\end{enumerate}
-
-\subsection{Current Controls}
-When global hotkeys are available, the assistant uses \texttt{9} as the hold-to-record key, \texttt{x} to interrupt transcription, response generation, or playback, and \texttt{q} to quit. If macOS accessibility permissions are unavailable, the system falls back to typed commands in the terminal, including typed stop commands.
-
-\subsection{Models and Dependencies}
-The Python project is defined in \texttt{sam/pyproject.toml}. The current implementation uses:
+The app uses a shared SQLite database through \texttt{DatabaseStore.swift}, with tables for:
 
 \begin{itemize}[leftmargin=*]
-\item \texttt{mlx-audio} for speech-to-text and text-to-speech model loading,
-\item \texttt{kittentts} for one supported TTS backend,
-\item \texttt{sounddevice} for microphone capture and audio playback,
-\item \texttt{pynput} for keyboard hotkey handling,
-\item \texttt{requests} and \texttt{ollama} for LLM interaction.
+\item \texttt{locations} (timestamped coordinates),
+\item \texttt{photos} (timestamp, coordinates, local file path),
+\item \texttt{water} (daily water amount),
+\item \texttt{outside\_time} (daily outside minutes).
 \end{itemize}
 
-The default voice pipeline is local-first. Speech recognition is configured around Parakeet, speech synthesis around Kokoro or KittenTTS, and text generation through Ollama.
+Other persistence is local and simple:
 
-\subsection{Prompt and Data Files}
-The \texttt{sam/data/} directory contains prompt and persona material such as \texttt{introduction\_text.txt}, \texttt{SOUL.md}, and \texttt{taskd.md}. These files help shape the initial spoken interaction and assistant identity without hardcoding all text into Python source.
+\begin{itemize}[leftmargin=*]
+\item recurring hard costs are JSON-encoded to \texttt{UserDefaults},
+\item notepad text is persisted via \texttt{@AppStorage("notepad.text")}. 
+\end{itemize}
 
-\subsection{External Knowledge Integration}
-Sam can query an external Medha service through its runtime client in \texttt{sam/src/librarian\_client.py}. When the corresponding environment variables are set, retrieved snippets can be included in the prompt sent to Ollama. This keeps repository-local code small while still allowing the assistant to pull in a broader knowledge base that lives outside the \texttt{boba} tree.
+\section{Build and Test Workflow}
+Primary development is done in Xcode by opening \texttt{boba.xcodeproj} and running the \texttt{chatur} target.
+
+CLI checks are also available:
+
+\begin{itemize}[leftmargin=*]
+\item build: \texttt{xcodebuild -project boba.xcodeproj -scheme chatur -destination 'generic/platform=iOS Simulator' build}
+\item tests: \texttt{xcodebuild test -project boba.xcodeproj -scheme chatur -destination 'platform=iOS Simulator,name=iPhone 15'}
+\end{itemize}
 
 \section{Development Observations}
-This repository is intentionally pragmatic. The Swift app favors straightforward controllers and views over heavy abstraction, while the Python assistant keeps most operational behavior in one central file. That makes the project easy to inspect and modify quickly, but it also means documentation should be kept close to the code because behavior can change in a single source file.
+This repository is intentionally pragmatic. The Swift app favors straightforward controllers and views over heavy architectural layering. Most feature behavior is visible directly in view/controller files, which helps iteration speed but makes it important to keep documentation synchronized with current route names and persistence details.
 
-The current codebase would benefit from more automated tests, especially for the Python assistant and for Swift feature flows that touch persistence. Even so, the repository is already organized clearly enough for rapid iteration because the feature boundaries are visible from the directory structure and entry points.
+Automated coverage exists but is still light. Manual validation in simulator/device remains important for camera, location, and geospatial behavior.
 
 \section{Conclusion}
-The \texttt{boba} repository is a compact multi-project workspace that combines a personal iOS utility app with a local-first voice assistant. The codebase is broad in feature coverage, but still approachable because each subsystem has a clear entry point, a small set of core files, and direct mappings from user-facing behavior to source code. The current setup also leaves room for external knowledge retrieval through Medha without requiring that service to live inside this repository.
+The \texttt{boba} repository is a compact iOS-focused workspace organized around the \texttt{chatur} app. It covers a broad set of everyday utilities while keeping implementation surfaces clear and direct. With focused updates to docs when routes or storage change, the project remains easy to navigate and maintain.
 
 \end{document}
